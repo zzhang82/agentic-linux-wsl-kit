@@ -1,8 +1,10 @@
 # Agentic Linux WSL Kit
 
-Open-source skills and scripts for LLM-assisted Linux/WSL diagnostics, safe package/security updates, and rollback-safe WSL distro migrations.
+An open-source **LLM skill pack** for Linux/WSL operations: agent-readable `SKILL.md` playbooks plus deterministic scripts for diagnostics, safe package/security updates, and rollback-safe WSL distro migrations.
 
 > Status: MVP1-MVP3 scaffold is publish-ready for review. Scripts default to read-only or preview unless explicitly named otherwise.
+
+This project is primarily for **LLM coding agents** such as OpenCode, Claude Code, Codex-style agents, and other tools that understand reusable skills. The shell and PowerShell scripts are the execution layer; the main product is the skill-guided operating model.
 
 ![Agentic Linux WSL Kit architecture](assets/agentic-linux-wsl-kit-architecture.svg)
 
@@ -46,6 +48,8 @@ LLM coding agents are useful only when the local environment is understandable, 
 ```
 
 ## Skills
+
+Each skill is designed to be copied into an agent skill directory or referenced by a goal-running agent. The scripts are intentionally boring and inspectable so an LLM can cite evidence instead of guessing.
 
 ```text
 skills/

@@ -1,54 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
   <title id="title">Agentic Linux WSL Kit Architecture</title>
-  <desc id="desc">Architecture diagram showing human or LLM operator selecting three safe-by-default skills backed by shared scripts and validation evidence.</desc>
+  <desc id="desc">A sliced architecture diagram showing three agent skills, their script layer, validation evidence, and a separate non-overlapping safety guardrail column.</desc>
   <defs>
     <style>
-      .title{font:700 36px system-ui,Segoe UI,sans-serif;fill:#0f172a}.sub{font:500 18px system-ui,Segoe UI,sans-serif;fill:#475569}.box{fill:#f8fafc;stroke:#2563eb;stroke-width:2;rx:16}.skill{stroke-width:2;rx:16}.green{fill:#f0fdf4;stroke:#16a34a}.amber{fill:#fffbeb;stroke:#d97706}.purple{fill:#faf5ff;stroke:#7c3aed}.cyan{fill:#ecfeff;stroke:#0891b2}.guard{fill:#fff;stroke-width:2;stroke-dasharray:8 6;rx:14}.txt{font:600 18px system-ui,Segoe UI,sans-serif;fill:#111827}.small{font:400 14px system-ui,Segoe UI,sans-serif;fill:#334155}.tiny{font:400 12px system-ui,Segoe UI,sans-serif;fill:#475569}.arrow{stroke:#2563eb;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .bg{fill:#f8fafc}.panel{fill:#ffffff;stroke:#dbeafe;stroke-width:2;rx:22}.slice{stroke-width:2;rx:18}.green{fill:#ecfdf5;stroke:#10b981}.amber{fill:#fffbeb;stroke:#f59e0b}.purple{fill:#f5f3ff;stroke:#8b5cf6}.blue{fill:#eff6ff;stroke:#2563eb}.cyan{fill:#ecfeff;stroke:#06b6d4}.red{fill:#fff1f2;stroke:#ef4444}.guard{fill:#ffffff;stroke:#94a3b8;stroke-width:2;stroke-dasharray:8 7;rx:16}.title{font:800 38px system-ui,Segoe UI,sans-serif;fill:#0f172a}.subtitle{font:500 18px system-ui,Segoe UI,sans-serif;fill:#475569}.h1{font:750 22px system-ui,Segoe UI,sans-serif;fill:#111827}.h2{font:650 17px system-ui,Segoe UI,sans-serif;fill:#1f2937}.body{font:400 14px system-ui,Segoe UI,sans-serif;fill:#334155}.tiny{font:400 12px system-ui,Segoe UI,sans-serif;fill:#64748b}.mono{font:500 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#334155}.arrow{stroke:#2563eb;stroke-width:3;fill:none;marker-end:url(#arrow)}.softarrow{stroke:#94a3b8;stroke-width:2.5;fill:none;marker-end:url(#softarrow)}
     </style>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L10,3.5 z" fill="#2563eb"/></marker>
+    <marker id="softarrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"/></marker>
   </defs>
-  <rect width="1200" height="680" fill="#ffffff"/>
-  <text x="600" y="52" text-anchor="middle" class="title">Agentic Linux WSL Kit</text>
-  <text x="600" y="82" text-anchor="middle" class="sub">safe-by-default skills for diagnostics, updates, and WSL migration</text>
 
-  <rect x="350" y="110" width="500" height="76" class="box"/>
-  <text x="600" y="142" text-anchor="middle" class="txt">LLM / Human Operator</text>
-  <text x="600" y="166" text-anchor="middle" class="small">intent, goals, constraints, explicit approvals</text>
+  <rect width="1400" height="820" class="bg"/>
+  <text x="700" y="58" text-anchor="middle" class="title">Agentic Linux WSL Kit</text>
+  <text x="700" y="88" text-anchor="middle" class="subtitle">skills + scripts for safe Linux/WSL diagnostics, updates, and migrations</text>
 
-  <path d="M600 186 V225" class="arrow"/><path d="M600 222 H330 V260" class="arrow"/><path d="M600 222 H600 V260" class="arrow"/><path d="M600 222 H870 V260" class="arrow"/>
+  <!-- Main sliced architecture area -->
+  <rect x="70" y="120" width="910" height="620" class="panel"/>
+  <text x="100" y="158" class="h1">Core workflow</text>
+  <text x="100" y="182" class="body">A human or LLM chooses a skill, runs deterministic scripts, then validates evidence before changing state.</text>
 
-  <rect x="190" y="260" width="280" height="138" class="skill green"/>
-  <text x="330" y="296" text-anchor="middle" class="txt">linux-doctor</text>
-  <text x="330" y="322" text-anchor="middle" class="small">read-only diagnostics</text>
-  <text x="330" y="350" text-anchor="middle" class="tiny">OS, WSL, systemd, PATH, tools,</text>
-  <text x="330" y="370" text-anchor="middle" class="tiny">Docker, package health, metadata only</text>
+  <rect x="220" y="215" width="610" height="70" class="slice blue"/>
+  <text x="525" y="244" text-anchor="middle" class="h2">LLM / Human Operator</text>
+  <text x="525" y="267" text-anchor="middle" class="body">intent • constraints • approvals • stop conditions</text>
 
-  <rect x="510" y="260" width="280" height="138" class="skill amber"/>
-  <text x="650" y="296" text-anchor="middle" class="txt">package-security-update</text>
-  <text x="650" y="322" text-anchor="middle" class="small">preview then apply</text>
-  <text x="650" y="350" text-anchor="middle" class="tiny">apt health, update preview, security</text>
-  <text x="650" y="370" text-anchor="middle" class="tiny">timers, optional language tools</text>
+  <path d="M525 285 V326" class="arrow"/>
+  <path d="M525 323 H245 V355" class="arrow"/>
+  <path d="M525 323 H525 V355" class="arrow"/>
+  <path d="M525 323 H805 V355" class="arrow"/>
 
-  <rect x="830" y="260" width="280" height="138" class="skill purple"/>
-  <text x="970" y="296" text-anchor="middle" class="txt">wsl-version-migration</text>
-  <text x="970" y="322" text-anchor="middle" class="small">rollback-safe migration</text>
-  <text x="970" y="350" text-anchor="middle" class="tiny">inventory, export, install, migrate,</text>
-  <text x="970" y="370" text-anchor="middle" class="tiny">validate, cut over, manual retire</text>
+  <rect x="105" y="355" width="270" height="132" class="slice green"/>
+  <text x="240" y="388" text-anchor="middle" class="h2">linux-doctor</text>
+  <text x="240" y="413" text-anchor="middle" class="body">read-only diagnostics</text>
+  <text x="240" y="442" text-anchor="middle" class="tiny">OS • WSL • systemd • PATH</text>
+  <text x="240" y="462" text-anchor="middle" class="tiny">tools • Docker • package health</text>
 
-  <path d="M330 398 V438" class="arrow"/><path d="M650 398 V438" class="arrow"/><path d="M970 398 V438" class="arrow"/>
-  <rect x="190" y="438" width="920" height="90" class="box"/>
-  <text x="650" y="468" text-anchor="middle" class="txt">Scripts: shared execution layer</text>
-  <text x="470" y="502" text-anchor="middle" class="small">Bash: Linux/WSL checks and updates</text>
-  <text x="830" y="502" text-anchor="middle" class="small">PowerShell: Windows-side WSL operations</text>
+  <rect x="390" y="355" width="270" height="132" class="slice amber"/>
+  <text x="525" y="388" text-anchor="middle" class="h2">package-security-update</text>
+  <text x="525" y="413" text-anchor="middle" class="body">preview before apply</text>
+  <text x="525" y="442" text-anchor="middle" class="tiny">apt health • timers • audits</text>
+  <text x="525" y="462" text-anchor="middle" class="tiny">optional language/tool updates</text>
 
-  <path d="M650 528 V568" class="arrow"/>
-  <rect x="250" y="568" width="800" height="74" class="skill cyan"/>
-  <text x="650" y="598" text-anchor="middle" class="txt">Evidence + Validation</text>
-  <text x="650" y="622" text-anchor="middle" class="small">sanitized logs • before/after plans • validation checks • artifacts</text>
+  <rect x="675" y="355" width="270" height="132" class="slice purple"/>
+  <text x="810" y="388" text-anchor="middle" class="h2">wsl-version-migration</text>
+  <text x="810" y="413" text-anchor="middle" class="body">rollback-safe cutover</text>
+  <text x="810" y="442" text-anchor="middle" class="tiny">inventory • export • install</text>
+  <text x="810" y="462" text-anchor="middle" class="tiny">migrate • validate • set default</text>
 
-  <text x="96" y="132" class="txt">Safety guardrails</text>
-  <rect x="40" y="158" width="240" height="70" class="guard green"/><text x="160" y="188" text-anchor="middle" class="small">No secret contents</text><text x="160" y="210" text-anchor="middle" class="tiny">metadata only</text>
-  <rect x="40" y="246" width="240" height="70" class="guard amber"/><text x="160" y="276" text-anchor="middle" class="small">Preview by default</text><text x="160" y="298" text-anchor="middle" class="tiny">show before apply</text>
-  <rect x="40" y="334" width="240" height="70" class="guard purple"/><text x="160" y="364" text-anchor="middle" class="small">Rollback before cutover</text><text x="160" y="386" text-anchor="middle" class="tiny">export before migration</text>
-  <rect x="40" y="422" width="240" height="70" class="guard" style="stroke:#dc2626"/><text x="160" y="452" text-anchor="middle" class="small">Human approval</text><text x="160" y="474" text-anchor="middle" class="tiny">for destructive steps</text>
+  <path d="M240 487 V525" class="arrow"/>
+  <path d="M525 487 V525" class="arrow"/>
+  <path d="M810 487 V525" class="arrow"/>
+
+  <rect x="105" y="525" width="840" height="86" class="slice blue"/>
+  <text x="525" y="558" text-anchor="middle" class="h2">Shared script execution layer</text>
+  <text x="325" y="586" text-anchor="middle" class="mono">Bash: doctor/check/update/inventory/validate</text>
+  <text x="725" y="586" text-anchor="middle" class="mono">PowerShell: WSL export/install/default</text>
+
+  <path d="M525 611 V650" class="arrow"/>
+  <rect x="160" y="650" width="730" height="62" class="slice cyan"/>
+  <text x="525" y="676" text-anchor="middle" class="h2">Evidence + validation</text>
+  <text x="525" y="698" text-anchor="middle" class="body">sanitized logs • before/after summaries • smoke tests • human decision</text>
+
+  <!-- Separate guardrail column, intentionally not overlapping main graph -->
+  <rect x="1030" y="120" width="300" height="620" class="panel"/>
+  <text x="1180" y="158" text-anchor="middle" class="h1">Safety guardrails</text>
+  <text x="1180" y="184" text-anchor="middle" class="body">applied across every skill</text>
+
+  <rect x="1060" y="220" width="240" height="78" class="guard green"/>
+  <text x="1180" y="250" text-anchor="middle" class="h2">No secret contents</text>
+  <text x="1180" y="274" text-anchor="middle" class="tiny">metadata only; placeholders in docs</text>
+
+  <rect x="1060" y="322" width="240" height="78" class="guard amber"/>
+  <text x="1180" y="352" text-anchor="middle" class="h2">Preview by default</text>
+  <text x="1180" y="376" text-anchor="middle" class="tiny">explicit --apply for package changes</text>
+
+  <rect x="1060" y="424" width="240" height="78" class="guard purple"/>
+  <text x="1180" y="454" text-anchor="middle" class="h2">Rollback first</text>
+  <text x="1180" y="478" text-anchor="middle" class="tiny">export before WSL cutover</text>
+
+  <rect x="1060" y="526" width="240" height="78" class="guard red"/>
+  <text x="1180" y="556" text-anchor="middle" class="h2">Human approval</text>
+  <text x="1180" y="580" text-anchor="middle" class="tiny">no automated unregister/delete</text>
+
+  <path d="M1030 430 C1005 430 1005 680 890 680" class="softarrow"/>
+  <text x="1180" y="660" text-anchor="middle" class="tiny">Guardrails constrain the workflow,</text>
+  <text x="1180" y="680" text-anchor="middle" class="tiny">but do not cover or obscure it.</text>
+
+  <text x="70" y="790" class="tiny">Open-source safe: no real tokens, private keys, private hostnames, or destructive WSL actions in default paths.</text>
 </svg>

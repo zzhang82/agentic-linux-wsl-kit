@@ -1,0 +1,6 @@
+# Keep GitHub Linguist from presenting this primarily as a shell-script repo.
+# Scripts are important, but the project is an LLM skill pack whose primary
+# source material is Markdown skill instructions and documentation.
+scripts/*.sh linguist-vendored
+scripts/*.ps1 linguist-vendored
+assets/*.svg linguist-generated
