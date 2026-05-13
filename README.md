@@ -1,20 +1,22 @@
-# Agentic Linux WSL Kit
+# Aegis Skills
 
 [![Status](https://img.shields.io/badge/status-publish--ready-brightgreen)](#)
 [![Platform](https://img.shields.io/badge/platform-WSL2%20%7C%20Ubuntu-blue)](#)
 [![Safety](https://img.shields.io/badge/default-read--only%20%2F%20guarded-success)](#safety-model)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**Safe-by-default Linux/WSL operations for LLM coding agents.**
+**Secure automation skills for Linux/WSL and LLM coding-agent workflows.**
 
-Agentic Linux WSL Kit gives AI coding agents a safer way to work inside WSL: diagnose first, preview risky changes, block unsafe package commands, run approved installs in isolation, and leave behind machine-readable evidence.
+Aegis Skills is **not an agent**. It is a set of reusable skills, scripts, wrappers, and SOPs that existing agents or humans can run to keep Linux/WSL environments safer by default.
 
-![Agentic Linux WSL Kit architecture](assets/agentic-linux-wsl-kit-architecture.svg)
+It helps agents diagnose first, preview risky changes, block unsafe package commands, run approved installs in isolation, and leave behind machine-readable evidence.
+
+![Aegis Skills architecture](assets/agentic-linux-wsl-kit-architecture.svg)
 
 ## What it does
 
 - **Diagnose Linux/WSL health** with read-only checks.
-- **Preview and apply package/security updates** only after approval.
+- **Preview package/security updates** before applying changes.
 - **Guide rollback-safe WSL migration** workflows.
 - **Run recurring security audits** with structured `summary.json` output.
 - **Intercept risky npm/pnpm/yarn/bun/npx commands** and route them through a supply-chain guard.
