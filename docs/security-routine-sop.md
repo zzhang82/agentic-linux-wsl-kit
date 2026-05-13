@@ -1,73 +1,88 @@
-# Security Routine Standard Operating Procedure (SOP)
+# Aegis Skills security routine SOP
 
-This document outlines the standard operating procedure for running security checks in the Agentic Linux WSL environment.
+This document describes how to run recurring security checks with Aegis Skills.
+
+Aegis Skills is not an agent. It provides reusable skills and scripts that humans or existing agents can run to inspect Linux/WSL environments safely.
 
 ## Overview
 
-The security routine is a read-only process designed to provide visibility into the system's security posture without making automated changes. It uses a tiered approach (Daily, Weekly, Monthly) to balance thoroughness with execution time and resource usage.
+The security routine is read-only. It provides visibility into the system and project security posture without making automated changes.
 
-## Routine Schedule
+It uses a tiered schedule to balance speed and depth.
 
 | Frequency | Mode | Purpose |
 | :--- | :--- | :--- |
-| **Daily** | `--daily` | Baseline check for OS health and secret directory permissions. No network. |
-| **Weekly** | `--weekly` | Network-enabled check including system hardening (Lynis) and repo secret scanning (Gitleaks). |
-| **Monthly** | `--monthly` | Deep dive including SBOM generation and comprehensive vulnerability scanning. |
-| **Pre-coding**| `--preflight`| Fast check on the active repository before an agent begins work. |
+| Daily | `--daily` | Baseline check for OS health and secret directory permissions. No network. |
+| Weekly | `--weekly` | Network-enabled check including hardening and secret scanning. |
+| Monthly | `--monthly` | Deep scan with SBOM and vulnerability scanning. |
+| Pre-coding | `--preflight` | Fast check before an agent starts work in a repo. |
 
-## How to Run
+## Manual execution
 
-### Manual Execution
-
-Run the driver script from the repository root:
+Run from the repository root:
 
 ```bash
 bash scripts/wsl-security-check.sh --daily
+bash scripts/wsl-security-check.sh --weekly --project .
+bash scripts/wsl-security-check.sh --monthly --project .
+bash scripts/wsl-security-check.sh --preflight --project .
 ```
 
-### Automation (systemd)
+Review the latest summary:
 
-If `systemd=true` is enabled in `/etc/wsl.conf`, you can use a systemd user timer:
+```bash
+latest="$(ls -td ~/.local/state/wsl-security/* | head -1)"
+cat "$latest/summary.json"
+```
 
-1. Create `~/.config/systemd/user/wsl-security-daily.service`:
-   ```ini
-   [Unit]
-   Description=WSL Daily Security Check
+## Automation with systemd
 
-   [Service]
-   Type=oneshot
-   ExecStart=%h/code/agentic-linux-wsl-kit/scripts/wsl-security-check.sh --daily
-   ```
+If `systemd=true` is enabled in `/etc/wsl.conf`, you can use a systemd user timer.
 
-2. Create `~/.config/systemd/user/wsl-security-daily.timer`:
-   ```ini
-   [Unit]
-   Description=Run WSL Daily Security Check
+Create `~/.config/systemd/user/aegis-skills-daily.service`:
 
-   [Timer]
-   OnCalendar=daily
-   Persistent=true
+```ini
+[Unit]
+Description=Aegis Skills Daily Security Check
 
-   [Install]
-   WantedBy=timers.target
-   ```
+[Service]
+Type=oneshot
+ExecStart=%h/code/agentic-linux-wsl-kit/scripts/wsl-security-check.sh --daily
+```
 
-3. Enable and start:
-   ```bash
-   systemctl --user daemon-reload
-   systemctl --user enable --now wsl-security-daily.timer
-   ```
+Create `~/.config/systemd/user/aegis-skills-daily.timer`:
 
-## Handling Findings
+```ini
+[Unit]
+Description=Run Aegis Skills Daily Security Check
 
-1. **Review the Summary**: Check `~/.local/state/wsl-security/<run-id>/summary.json`.
-2. **Investigate WARN/FAIL**: Look at the specific log files in the run directory.
-3. **Draft a Fix Plan**: Create a manual plan to address the findings.
-4. **Execute approved fixes**: Use specialized skills like `package-security-update` for patching.
+[Timer]
+OnCalendar=daily
+Persistent=true
 
-## Safety Principles
+[Install]
+WantedBy=timers.target
+```
 
-- Never allow the routine to auto-fix issues.
-- Never store raw secrets in the logs.
-- Always use `--redact` with Gitleaks.
-- If a check requires `sudo`, it should only be run in modes where the user is present to approve or via non-interactive sudo if specifically configured and approved.
+Enable and start:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now aegis-skills-daily.timer
+```
+
+## Handling findings
+
+1. Review `~/.local/state/wsl-security/<run-id>/summary.json`.
+2. Inspect referenced log files in the same run directory.
+3. Draft a fix plan.
+4. Execute approved fixes with the relevant Aegis Skills workflow.
+5. Re-run the check and compare before/after evidence.
+
+## Safety principles
+
+- Do not allow the routine to auto-fix issues.
+- Do not store raw secrets in logs.
+- Use redaction for secret scanners where available.
+- Use non-interactive `sudo -n` only where explicitly intended.
+- Treat `summary.json` as the machine-readable source of truth.
