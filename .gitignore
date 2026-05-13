@@ -1,0 +1,6 @@
+# Local agent/editor workspace files
+.opencode/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
