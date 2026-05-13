@@ -38,7 +38,8 @@ Trigger this skill when you need to audit the security posture of the WSL enviro
 ## Workflow
 
 1. Identify the scope (distro, project path) and mode.
-2. Run `scripts/wsl-security-check.sh --<mode>`.
+2. **Package Operation Check**: If the task involves `npm`, `pnpm`, or `yarn` installation/update, hand off to `node-supply-chain-guard` skill first.
+3. Run `scripts/wsl-security-check.sh --<mode>`.
 3. Review the summary generated in `~/.local/state/wsl-security/`.
 4. If risks are found, propose a safe, manual fix plan.
 5. Escalation: Use `package-security-update` skill only for approved package fixes.

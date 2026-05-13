@@ -16,6 +16,30 @@
 ### Stop reason, if any
 - None.
 
+## Checkpoint 6 - 2026-05-13 22:00
+
+### Changed
+- Shifted strategy from passive "Security Routine" to "Active Defense".
+- Implemented `node-supply-chain-guard` skill and enforcement script.
+- Created `scripts/safe-npm.sh` to intercept and block raw `npm install/update/exec` commands.
+- Added documentation for `agent-active-defense.md` and `npm-supply-chain-policy.md`.
+- Updated `wsl-security-routine` skill to hand off package operations to the new guard.
+
+### Validation
+- Command: `bash tests/smoke.sh`
+- Result: PASS.
+- Command: `bash scripts/safe-npm.sh install axios`
+- Result: Correctly BLOCKED with redirection to the guard.
+- Command: `bash scripts/node-supply-chain-guard.sh --request "npm install axios"`
+- Result: Correctly identified HIGH RISK and proposed a safe `env -i ... npm ci --ignore-scripts` alternative.
+
+### Next
+- Optional: Implement wrappers for `pnpm`, `yarn`, and `bun`.
+- Optional: Add automated lockfile diffing logic.
+
+### Stop reason, if any
+- Active Defense MVP is implemented and validated.
+
 ## Checkpoint 5 - 2026-05-13 21:00
 
 ### Changed
