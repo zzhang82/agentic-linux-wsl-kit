@@ -1,13 +1,15 @@
-# Project overview
+# Aegis Skills project overview
 
-Agentic Linux WSL Kit is a safe-by-default operating layer for LLM coding agents working inside Linux/WSL.
+Aegis Skills is a safe-by-default automation layer for Linux/WSL and LLM coding-agent workflows.
 
-The repository combines agent-readable `SKILL.md` playbooks with deterministic scripts. The design goal is simple: agents can collect evidence and propose changes, but risky actions are previewed, gated, or intercepted.
+It is not an agent. It is a collection of agent-readable `SKILL.md` playbooks, deterministic scripts, command wrappers, and SOPs that can be run by humans or existing agents.
+
+The design goal is simple: agents can collect evidence and propose changes, but risky actions are previewed, gated, intercepted, or executed inside a restricted environment.
 
 ## Architecture
 
 ```text
-Agent request
+Agent or human request
   -> skill playbook
   -> deterministic script
   -> evidence output
