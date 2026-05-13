@@ -14,10 +14,11 @@ Usage:
   $0 [mode] [options]
 
 Modes:
-  --daily      Fast, local, no sudo, no network
-  --weekly     Network allowed, includes Lynis/Gitleaks/Trivy
-  --monthly    Deep scan, SBOM/Grype/TruffleHog/Docker
-  --preflight  Fast check before coding-agent work
+  --daily        Fast, local, no sudo, no network
+  --weekly       Network allowed, includes Lynis/Gitleaks/Trivy
+  --monthly      Deep scan, SBOM/Grype/TruffleHog/Docker
+  --preflight    Fast check before coding-agent work
+  --list-tools   Report status of integrated scanners without running audit
 
 Options:
   --project PATH   Specific project directory to scan (default: current or ~/projects)
@@ -30,7 +31,9 @@ PROJECT_PATH="${PROJECT_PATH:-$PWD}"
 
 while [ "${1:-}" != "" ]; do
   case "$1" in
-    --daily|--weekly|--monthly|--preflight) MODE="${1#--}"; shift ;;
+    --daily|--weekly|--monthly|--preflight|--list-tools|--doctor-tools)
+      if [ "$1" = "--doctor-tools" ]; then MODE="list-tools"; else MODE="${1#--}"; fi
+      shift ;;
     --project) PROJECT_PATH="$2"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -43,6 +46,21 @@ if [ -z "$MODE" ]; then
   exit 2
 fi
 
+# Common helpers
+have() { command -v "$1" >/dev/null 2>&1; }
+
+if [ "$MODE" = "list-tools" ]; then
+  echo "== security tools status =="
+  for t in lynis gitleaks trivy syft grype trufflehog docker python3; do
+    if have "$t"; then
+      printf 'OK   %-12s %s\n' "$t" "$(command -v "$t")"
+    else
+      printf 'MISS %-12s\n' "$t"
+    fi
+  done
+  exit 0
+fi
+
 # Setup run directory
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 RUN_DIR="$STATE_DIR/${MODE}-${TIMESTAMP}"
@@ -51,8 +69,19 @@ mkdir -p "$RUN_DIR"
 echo "INFO starting $MODE security check"
 echo "INFO run directory: $RUN_DIR"
 
-# Common helpers
-have() { command -v "$1" >/dev/null 2>&1; }
+# Create manifest
+cat <<EOF > "$RUN_DIR/manifest.json"
+{
+  "mode": "$MODE",
+  "timestamp_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "project_path": "$PROJECT_PATH",
+  "tool_versions": {
+    "driver": "$VERSION",
+    "lynis": "$(have lynis && lynis show version 2>/dev/null || echo "missing")",
+    "gitleaks": "$(have gitleaks && gitleaks version 2>/dev/null || echo "missing")"
+  }
+}
+EOF
 
 # 1. Base diagnostics (linux-doctor)
 echo "INFO running linux-doctor"
@@ -79,20 +108,24 @@ find "$HOME/.ssh" "$HOME/.gnupg" "$HOME/.aws" "$HOME/.config/gcloud" \
 if [ "$MODE" = "weekly" ] || [ "$MODE" = "monthly" ]; then
   if have lynis; then
     echo "INFO running lynis audit"
-    # shellcheck disable=SC2024
-    sudo lynis audit system --quick --no-colors > "$RUN_DIR/lynis.txt" 2>&1 || true
+    if sudo -n true 2>/dev/null; then
+      # shellcheck disable=SC2024
+      sudo lynis audit system --quick --no-colors > "$RUN_DIR/lynis.txt" 2>&1 || true
+    else
+      echo "WARN lynis skipped: sudo without prompt is unavailable" > "$RUN_DIR/lynis.txt"
+    fi
   fi
 
   if have gitleaks; then
     echo "INFO running gitleaks"
     if [ -d "$PROJECT_PATH/.git" ]; then
-      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact > "$RUN_DIR/gitleaks-project.txt" 2>&1 || true
+      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact --report-format json --report-path "$RUN_DIR/gitleaks-project.json" > "$RUN_DIR/gitleaks-project.txt" 2>&1 || true
     fi
   fi
 
   if have trivy; then
     echo "INFO running trivy fs"
-    trivy fs --scanners vuln,misconfig,secret --skip-dirs "$HOME/.cache" "$PROJECT_PATH" > "$RUN_DIR/trivy-fs.txt" 2>&1 || true
+    trivy fs --scanners vuln,misconfig,secret --skip-dirs "$HOME/.cache" --format json --output "$RUN_DIR/trivy-fs.json" "$PROJECT_PATH" > "$RUN_DIR/trivy-fs.txt" 2>&1 || true
   fi
 fi
 
@@ -106,7 +139,7 @@ if [ "$MODE" = "monthly" ]; then
     echo "INFO generating SBOM and scanning"
     syft "$PROJECT_PATH" -o cyclonedx-json="$RUN_DIR/sbom.cdx.json" >/dev/null 2>&1 || true
     if [ -f "$RUN_DIR/sbom.cdx.json" ]; then
-      grype "sbom:$RUN_DIR/sbom.cdx.json" > "$RUN_DIR/grype.txt" 2>&1 || true
+      grype "sbom:$RUN_DIR/sbom.cdx.json" -o json > "$RUN_DIR/grype.json" 2> "$RUN_DIR/grype.txt" || true
     fi
   fi
 
@@ -116,9 +149,13 @@ if [ "$MODE" = "monthly" ]; then
 fi
 
 if [ "$MODE" = "preflight" ]; then
-  if have gitleaks && [ -d "$PROJECT_PATH/.git" ]; then
-    echo "INFO running gitleaks preflight"
-    gitleaks detect --source "$PROJECT_PATH" --no-banner --redact > "$RUN_DIR/gitleaks-preflight.txt" 2>&1 || true
+  if [ -d "$PROJECT_PATH/.git" ]; then
+    echo "INFO running git status"
+    git -C "$PROJECT_PATH" status --short --branch > "$RUN_DIR/git-status.txt" 2>&1 || true
+    if have gitleaks; then
+      echo "INFO running gitleaks preflight"
+      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact --report-format json --report-path "$RUN_DIR/gitleaks-preflight.json" > "$RUN_DIR/gitleaks-preflight.txt" 2>&1 || true
+    fi
   fi
 fi
 

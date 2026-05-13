@@ -89,8 +89,12 @@ else
   status_line INFO npm "skipped: no package-lock.json or npm missing"
 fi
 if command -v uv >/dev/null 2>&1 && [ -f pyproject.toml ]; then
-  echo "INFO Python project detected; consider: uv run pip-audit (if pip-audit is configured)"
+  status_line INFO uv "Python project detected; consider: uv run pip-audit (if pip-audit is configured)"
 fi
 
 section "summary"
-echo "Read-only check complete. Use package-security-update.sh --apply for approved updates."
+if [ "$FORMAT" = "text" ]; then
+  echo "Read-only check complete. Use package-security-update.sh --apply for approved updates."
+else
+  status_line OK summary "Read-only check complete."
+fi

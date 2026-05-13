@@ -11,9 +11,21 @@ def summarize(run_dir):
         "findings": [],
         "run_info": {
             "directory": str(run_path),
-            "mode": run_path.name.split("-")[0]
+            "mode": "unknown",
+            "timestamp": "unknown"
         }
     }
+
+    # 0. Load manifest
+    manifest_file = run_path / "manifest.json"
+    if manifest_file.exists():
+        with open(manifest_file, "r") as f:
+            manifest = json.load(f)
+            summary["run_info"].update({
+                "mode": manifest.get("mode", "unknown"),
+                "timestamp": manifest.get("timestamp_utc", "unknown"),
+                "project_path": manifest.get("project_path", "unknown")
+            })
 
     # 1. Parse linux-doctor.ndjson
     doctor_file = run_path / "linux-doctor.ndjson"
@@ -59,25 +71,47 @@ def summarize(run_dir):
                 except (json.JSONDecodeError, ValueError, IndexError):
                     continue
 
+    # 2b. Parse git-status.txt
+    git_status_file = run_path / "git-status.txt"
+    if git_status_file.exists():
+        with open(git_status_file, "r") as f:
+            lines = f.readlines()
+            if lines:
+                summary["findings"].append({
+                    "source": "git",
+                    "level": "INFO",
+                    "area": "preflight",
+                    "message": f"Active repo status: {lines[0].strip()}"
+                })
+
     # 3. Check for gitleaks findings
-    for gitleaks_file in run_path.glob("gitleaks-*.txt"):
-        if gitleaks_file.exists() and gitleaks_file.stat().st_size > 0:
-            with open(gitleaks_file, "r") as f:
-                content = f.read()
-                if "leaks found" in content.lower() or "finding" in content.lower():
+    for gitleaks_json in run_path.glob("gitleaks-*.json"):
+        try:
+            with open(gitleaks_json, "r") as f:
+                leaks = json.load(f)
+                if leaks:
                     summary["findings"].append({
                         "source": "gitleaks",
                         "level": "FAIL",
                         "area": "secrets",
-                        "message": f"Potential secrets detected in {gitleaks_file.name}"
+                        "message": f"{len(leaks)} potential secrets detected in {gitleaks_json.name}"
                     })
+        except (json.JSONDecodeError, ValueError):
+            continue
 
     # 4. Check for lynis findings
     lynis_file = run_path / "lynis.txt"
     if lynis_file.exists():
         with open(lynis_file, "r") as f:
             content = f.read()
-            if "warning" in content.lower() or "suggestion" in content.lower():
+            if "sudo without prompt is unavailable" in content:
+                summary["findings"].append({
+                    "source": "lynis",
+                    "level": "INFO",
+                    "area": "hardening",
+                    "message": "Lynis audit skipped: sudo without prompt is unavailable"
+                })
+            elif "warning" in content.lower() or "suggestion" in content.lower():
                 summary["findings"].append({
                     "source": "lynis",
                     "level": "INFO",
@@ -86,17 +120,25 @@ def summarize(run_dir):
                 })
 
     # 5. Check for trivy findings
-    trivy_file = run_path / "trivy-fs.txt"
-    if trivy_file.exists():
-        with open(trivy_file, "r") as f:
-            content = f.read()
-            if "CRITICAL" in content or "HIGH" in content:
-                summary["findings"].append({
-                    "source": "trivy",
-                    "level": "WARN",
-                    "area": "vulnerability",
-                    "message": "Critical or High vulnerabilities found by Trivy"
-                })
+    trivy_json = run_path / "trivy-fs.json"
+    if trivy_json.exists():
+        try:
+            with open(trivy_json, "r") as f:
+                data = json.load(f)
+                vulns = []
+                for result in data.get("Results", []):
+                    for vuln in result.get("Vulnerabilities", []):
+                        if vuln.get("Severity") in ["CRITICAL", "HIGH"]:
+                            vulns.append(vuln)
+                if vulns:
+                    summary["findings"].append({
+                        "source": "trivy",
+                        "level": "WARN",
+                        "area": "vulnerability",
+                        "message": f"{len(vulns)} Critical or High vulnerabilities found by Trivy"
+                    })
+        except (json.JSONDecodeError, ValueError):
+            pass
 
     # Determine overall status
     if any(f["level"] == "FAIL" for f in summary["findings"]):

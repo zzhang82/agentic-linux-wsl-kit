@@ -28,6 +28,8 @@ done
 echo "== security routine scripts =="
 bash -n scripts/wsl-security-check.sh
 echo "ok scripts/wsl-security-check.sh"
+bash scripts/wsl-security-check.sh --list-tools >/tmp/agentic-linux-wsl-kit-tools.txt
+echo "ok scripts/wsl-security-check.sh --list-tools"
 python3 -m py_compile scripts/wsl-security-summarize.py
 echo "ok scripts/wsl-security-summarize.py"
 
