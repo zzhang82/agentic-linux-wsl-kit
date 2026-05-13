@@ -1,46 +1,87 @@
-# Agent Active Defense
+# Aegis Skills active defense
 
-This document describes the "Active Defense" strategy for Agentic Linux WSL environments. 
+This document describes the active defense strategy used by Aegis Skills for agent-led package operations.
 
-## The Problem
+Aegis Skills is not an agent. It provides skills, wrappers, scripts, and policies that existing agents or humans can run.
 
-LLM coding agents have broad file and command execution permissions. This creates a significant supply-chain risk if an agent is tricked into installing or executing malicious code via package managers (`npm`, `pnpm`, etc.).
+## The problem
 
-## The Strategy
+LLM coding agents can have broad file and command execution permissions. That creates supply-chain risk if an agent is tricked into installing or executing malicious code through package managers such as `npm`, `pnpm`, `yarn`, `bun`, or `npx`.
 
-Instead of relying on the agent to "be secure," we enforce security via **interception** and **policy gating**.
+The dangerous pattern is simple:
 
-### 1. Interception Layer
+```text
+agent receives task -> agent runs package install -> lifecycle script executes -> secrets or source code are exposed
+```
 
-We provide shell wrappers (`scripts/safe-npm.sh`, `scripts/safe-pnpm.sh`, etc.) that intercept dangerous commands. These wrappers block direct execution and redirect the agent to the security guard.
+## The strategy
 
-### 2. Policy Gating (The Guard)
+Do not rely on the agent to remember every security rule. Enforce security with **interception** and **policy gating**.
 
-The `scripts/node-supply-chain-guard.sh` script acts as the enforcement brain. It:
-- Inspects project configuration for non-standard registries.
-- Reviews `package.json` for hidden lifecycle scripts.
-- Construct and executes pre-approved safe commands via `--execute-approved`.
-- Forces a strictly isolated environment (temporary `HOME`, restricted `PATH`) for package operations.
+### 1. Interception layer
 
-### 3. Isolated Execution
+Shell wrappers intercept dangerous commands:
 
-Package operations should ideally be run in a disposable container (Docker) or a strictly limited subshell. 
+```text
+safe-npm.sh
+safe-npx.sh
+safe-pnpm.sh
+safe-yarn.sh
+safe-bun.sh
+```
 
-### 4. Post-Install Validation
+These wrappers block direct execution and redirect the agent to `scripts/node-supply-chain-guard.sh`.
 
-After any dependency change, a mandatory security scan is performed on the `node_modules` directory using Gitleaks and Trivy.
+### 2. Policy gating
 
-## Workflow for Agents
+`node-supply-chain-guard.sh` is the enforcement point. It:
 
-1. **Pre-flight**: Agent runs `wsl-security-check --preflight`.
-2. **Dependency Request**: Agent uses `node-supply-chain-guard --request "..."`.
-3. **Review & Approve**: Human reviews the guard's output and safe command suggestion.
-4. **Isolated Install**: Approved command runs in a stripped environment.
-5. **Post-Scan**: Agent runs `node-supply-chain-guard --postinstall-scan`.
+- checks project registry configuration;
+- checks lockfile presence;
+- reviews lifecycle scripts;
+- proposes guard-owned execution commands;
+- runs approved installs in an isolated environment;
+- runs post-install scanning.
 
-## Key Safety Rules
+### 3. Isolated execution
 
-- **No Secrets**: Never expose `OPENAI_API_KEY` or `GITHUB_TOKEN` to package manager processes.
-- **No Scripts**: Always use `--ignore-scripts` during automated installs.
-- **Deterministic**: Always prefer `npm ci` or frozen lockfiles.
-- **Evidence-First**: Every operation must produce a log in `~/.local/state/wsl-security/`.
+Approved package operations run with:
+
+```text
+env -i
+temporary HOME
+restricted PATH
+npm/pnpm config redirected into temp HOME
+--ignore-scripts / frozen lockfile behavior
+```
+
+This prevents package-manager operations from casually inheriting API keys, GitHub tokens, cloud credentials, SSH agent sockets, or the user's real `.npmrc`.
+
+### 4. Post-install validation
+
+After a dependency change, scan `node_modules` with available tools such as Gitleaks and Trivy.
+
+## Workflow for agents
+
+1. Run a security preflight.
+2. Request the package operation through the guard.
+3. Present the guard output to the human.
+4. Execute only the guard-owned approved command.
+5. Run post-install scanning.
+6. Report findings and next steps.
+
+```bash
+bash scripts/wsl-security-check.sh --preflight --project .
+bash scripts/node-supply-chain-guard.sh --request "npm install <package>" --project .
+bash scripts/node-supply-chain-guard.sh --execute-approved npm-ci --project .
+bash scripts/node-supply-chain-guard.sh --postinstall-scan --project .
+```
+
+## Key safety rules
+
+- Do not expose API keys or tokens to package-manager processes.
+- Do not run raw `npm install`, `pnpm add`, `npx`, `bunx`, or similar commands directly.
+- Use `--ignore-scripts` during automated installs.
+- Prefer deterministic installs such as `npm ci` or frozen lockfiles.
+- Treat lifecycle scripts as executable code that needs review.
+- Produce evidence before and after risky work.
