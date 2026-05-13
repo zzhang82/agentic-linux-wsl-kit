@@ -69,19 +69,38 @@ mkdir -p "$RUN_DIR"
 echo "INFO starting $MODE security check"
 echo "INFO run directory: $RUN_DIR"
 
-# Create manifest
-cat <<EOF > "$RUN_DIR/manifest.json"
-{
-  "mode": "$MODE",
-  "timestamp_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "project_path": "$PROJECT_PATH",
-  "tool_versions": {
-    "driver": "$VERSION",
-    "lynis": "$(have lynis && lynis show version 2>/dev/null || echo "missing")",
-    "gitleaks": "$(have gitleaks && gitleaks version 2>/dev/null || echo "missing")"
-  }
+# Export variables for Python manifest creator
+export MODE TIMESTAMP_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)" PROJECT_PATH RUN_DIR VERSION
+
+# Create manifest safely using Python
+python3 -c '
+import json, sys, os, subprocess, shutil
+def get_ver(cmd, args):
+    if not shutil.which(cmd): return "missing"
+    try:
+        return subprocess.run([cmd] + args, capture_output=True, text=True, timeout=2).stdout.splitlines()[0].strip()
+    except:
+        return "error"
+
+manifest = {
+    "mode": os.environ.get("MODE"),
+    "timestamp_utc": os.environ.get("TIMESTAMP_UTC"),
+    "project_path": os.environ.get("PROJECT_PATH"),
+    "tool_versions": {
+        "driver": os.environ.get("VERSION"),
+        "lynis": get_ver("lynis", ["show", "version"]),
+        "gitleaks": get_ver("gitleaks", ["version"]),
+        "trivy": get_ver("trivy", ["--version"]),
+        "syft": get_ver("syft", ["--version"]),
+        "grype": get_ver("grype", ["version"]),
+        "trufflehog": get_ver("trufflehog", ["--version"]),
+        "docker": get_ver("docker", ["--version"]),
+        "python3": get_ver("python3", ["--version"])
+    }
 }
-EOF
+with open(os.path.join(os.environ.get("RUN_DIR"), "manifest.json"), "w") as f:
+    json.dump(manifest, f, indent=2)
+'
 
 # 1. Base diagnostics (linux-doctor)
 echo "INFO running linux-doctor"
@@ -132,7 +151,8 @@ fi
 if [ "$MODE" = "monthly" ]; then
   if have trufflehog; then
     echo "INFO running trufflehog"
-    trufflehog filesystem "$PROJECT_PATH" --only-verified > "$RUN_DIR/trufflehog.txt" 2>&1 || true
+    # Prefer JSON output for safer parsing and redaction
+    trufflehog filesystem "$PROJECT_PATH" --only-verified --json > "$RUN_DIR/trufflehog.json" 2> "$RUN_DIR/trufflehog-error.txt" || true
   fi
 
   if have syft && have grype; then

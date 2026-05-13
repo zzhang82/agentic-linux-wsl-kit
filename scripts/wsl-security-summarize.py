@@ -140,6 +140,46 @@ def summarize(run_dir):
         except (json.JSONDecodeError, ValueError):
             pass
 
+    # 6. Check for grype findings
+    grype_json = run_path / "grype.json"
+    if grype_json.exists():
+        try:
+            with open(grype_json, "r") as f:
+                data = json.load(f)
+                vulns = []
+                for match in data.get("matches", []):
+                    severity = match.get("vulnerability", {}).get("severity")
+                    if severity in ["Critical", "High"]:
+                        vulns.append(match)
+                if vulns:
+                    summary["findings"].append({
+                        "source": "grype",
+                        "level": "WARN",
+                        "area": "vulnerability",
+                        "message": f"{len(vulns)} Critical or High vulnerabilities found by Grype"
+                    })
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 7. Check for trufflehog findings
+    trufflehog_json = run_path / "trufflehog.json"
+    if trufflehog_json.exists():
+        try:
+            leaks_count = 0
+            with open(trufflehog_json, "r") as f:
+                for line in f:
+                    if line.strip():
+                        leaks_count += 1
+            if leaks_count > 0:
+                summary["findings"].append({
+                    "source": "trufflehog",
+                    "level": "FAIL",
+                    "area": "secrets",
+                    "message": f"{leaks_count} potential secrets detected by TruffleHog (verified)"
+                })
+        except Exception:
+            pass
+
     # Determine overall status
     if any(f["level"] == "FAIL" for f in summary["findings"]):
         summary["status"] = "FAIL"
