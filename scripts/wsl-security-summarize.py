@@ -175,7 +175,7 @@ def summarize(run_dir):
                     "source": "trufflehog",
                     "level": "FAIL",
                     "area": "secrets",
-                    "message": f"{leaks_count} potential secrets detected by TruffleHog (verified)"
+                    "message": f"{leaks_count} verified secret findings detected by TruffleHog"
                 })
         except Exception:
             pass
