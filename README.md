@@ -11,6 +11,8 @@ Aegis Skills is **not an agent**. It is a set of reusable skills, scripts, wrapp
 
 It helps agents diagnose first, preview risky changes, block unsafe package commands, run approved installs in isolation, and leave behind machine-readable evidence.
 
+**Tags:** `llm-agents` · `coding-agents` · `devsecops` · `supply-chain-security` · `npm-security` · `wsl` · `linux` · `automation`
+
 ## How it works
 
 ```text
@@ -149,6 +151,7 @@ validation produces evidence
 
 - [Project overview](docs/project-overview.md)
 - [Active defense strategy](docs/agent-active-defense.md)
+- [Repository metadata](docs/repository-metadata.md)
 - [npm supply-chain policy](docs/npm-supply-chain-policy.md)
 - [Security routine SOP](docs/security-routine-sop.md)
 - [Threat model](docs/threat-model.md)
