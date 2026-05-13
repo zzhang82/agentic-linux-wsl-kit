@@ -16,6 +16,24 @@
 ### Stop reason, if any
 - None.
 
+## Checkpoint 7 - 2026-05-13 23:00
+
+### Changed
+- Hardened `scripts/node-supply-chain-guard.sh` by adding `cd "$PROJECT_PATH"` before approved execution.
+- Added a `trap` for `TMP_HOME` cleanup to ensure temporary directories are removed even on execution failure.
+- Verified isolated execution with the new directory and cleanup logic.
+
+### Validation
+- Command: `bash scripts/node-supply-chain-guard.sh --execute-approved npm-ci --project /tmp/opencode`
+- Result: Correctly switched to `/tmp/opencode` before execution and logged the action.
+
+### Next
+- Optional: Add more pre-approved command types to the guard.
+- Optional: Implement more granular path restriction.
+
+### Stop reason, if any
+- Implementation fixes for Active Defense are complete.
+
 ## Checkpoint 6 - 2026-05-13 22:00
 
 ### Changed

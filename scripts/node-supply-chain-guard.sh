@@ -103,16 +103,24 @@ case "$MODE" in
 
   execute-approved)
     echo "== Executing Approved Safe Command =="
+    if [ ! -d "$PROJECT_PATH" ]; then
+      echo "ERROR project path does not exist: $PROJECT_PATH" >&2
+      exit 1
+    fi
+    
     TMP_HOME="$(mktemp -d)"
     echo "INFO using isolated HOME: $TMP_HOME"
+    cleanup() { rm -rf "$TMP_HOME"; }
+    trap cleanup EXIT
     
     # Strictly defined path + current node bin
     NODE_BIN="$(dirname "$(command -v node 2>/dev/null || echo "/usr/bin/node")")"
     SAFE_PATH="$NODE_BIN:/usr/local/bin:/usr/bin:/bin"
     
+    cd "$PROJECT_PATH"
     case "$REQUEST_CMD" in
       npm-ci)
-        echo "INFO running npm ci --ignore-scripts"
+        echo "INFO running npm ci --ignore-scripts in $PWD"
         env -i \
           HOME="$TMP_HOME" \
           PATH="$SAFE_PATH" \
@@ -121,7 +129,7 @@ case "$MODE" in
           npm ci --ignore-scripts
         ;;
       pnpm-install)
-        echo "INFO running pnpm install --frozen-lockfile --ignore-scripts"
+        echo "INFO running pnpm install --frozen-lockfile --ignore-scripts in $PWD"
         env -i \
           HOME="$TMP_HOME" \
           PATH="$SAFE_PATH" \
@@ -134,7 +142,6 @@ case "$MODE" in
         exit 1
         ;;
     esac
-    rm -rf "$TMP_HOME"
     ;;
 
   postinstall-scan)
