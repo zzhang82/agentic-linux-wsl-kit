@@ -16,6 +16,66 @@
 ### Stop reason, if any
 - None.
 
+## Checkpoint 5 - 2026-05-13 21:00
+
+### Changed
+- Implemented the `wsl-security-routine` skill and scripts.
+- Created `scripts/wsl-security-check.sh` as the main driver for daily/weekly/monthly/preflight modes.
+- Created `scripts/wsl-security-summarize.py` to aggregate findings into a machine-readable JSON summary.
+- Updated `scripts/package-security-check.sh` to support `--format json`.
+- Created `docs/security-routine-sop.md` and `docs/tool-policy.md`.
+- Updated `README.md` and `tests/smoke.sh` to include the new security routine.
+
+### Validation
+- Command: `bash tests/smoke.sh`
+- Result: PASS; all scripts and docs are present, shell syntax is correct, and a sample `--daily` run produced a valid `summary.json`.
+
+### Next
+- Optional: Implement specific parsers for Lynis, Gitleaks, and Trivy in the aggregator.
+- Optional: Add systemd timer templates to the repository.
+
+### Stop reason, if any
+- MVP4 (Security Routine) is implemented and validated.
+
+## Checkpoint 4 - 2026-05-11 01:52
+
+### Changed
+- Reworked README architecture SVG into a wider sliced-layout diagram so the safety guardrails live in a separate right-side column and no longer overlap the main workflow graph.
+- Updated README positioning to explicitly describe the project as an open-source LLM skill pack for OpenCode, Claude Code, Codex-style agents, and similar tools.
+- Added `.gitattributes` to reduce GitHub Linguist misclassification as a shell-script-first project by marking `scripts/*.sh`, `scripts/*.ps1`, and SVG assets as vendored/generated for language stats.
+
+### Validation
+- Command: `bash tests/smoke.sh && shellcheck scripts/*.sh tests/*.sh`
+- Result: PASS.
+- Command: `git diff -- README.md .gitattributes assets/agentic-linux-wsl-kit-architecture.svg`
+- Result: confirms README LLM-skill-pack wording, new `.gitattributes`, and non-overlapping sliced SVG diagram changes.
+
+### Next
+- Human can review local changes, then request commit/push for the README/image/tag clarification update.
+
+### Stop reason, if any
+- Local update complete; not committed/pushed yet because this is a follow-up change after the initial push.
+
+## Checkpoint 3 - 2026-05-11 01:42
+
+### Changed
+- Committed the initial open-source Agentic Linux WSL Kit scaffold.
+- Pushed `main` to GitHub remote `https://github.com/zzhang82/agentic-linux-wsl-kit.git`.
+
+### Validation
+- Command: `bash tests/smoke.sh && shellcheck scripts/*.sh tests/*.sh`
+- Result: PASS before commit.
+- Command: `gh auth status`
+- Result: logged in to GitHub as `zzhang82` with HTTPS git protocol.
+- Command: `git push -u origin main && git status --short --branch`
+- Result: new `main` branch pushed; local branch now tracks `origin/main`; working tree clean before progress-log update.
+
+### Next
+- Optional: commit this progress-log update, add release tags, or create GitHub release after human review.
+
+### Stop reason, if any
+- Initial public repository push is complete.
+
 ## Checkpoint 2 - 2026-05-11 01:32
 
 ### Changed

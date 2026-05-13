@@ -25,10 +25,22 @@ for f in skills/*/SKILL.md; do
   echo "ok $f"
 done
 
+echo "== security routine scripts =="
+bash -n scripts/wsl-security-check.sh
+echo "ok scripts/wsl-security-check.sh"
+python3 -m py_compile scripts/wsl-security-summarize.py
+echo "ok scripts/wsl-security-summarize.py"
+
+echo "== security docs present =="
+test -s docs/security-routine-sop.md
+test -s docs/tool-policy.md
+echo "ok docs"
+
 echo "== non-destructive script runs =="
 bash scripts/linux-doctor.sh >/tmp/agentic-linux-wsl-kit-doctor.txt
 bash scripts/linux-doctor.sh --format json >/tmp/agentic-linux-wsl-kit-doctor.jsonl
 bash scripts/package-security-update.sh --preview >/tmp/agentic-linux-wsl-kit-update-preview.txt
+bash scripts/wsl-security-check.sh --daily >/tmp/agentic-linux-wsl-kit-security-daily.txt
 
 echo "== secret scan sanity =="
 if grep -RInE '(apiKey|BEGIN (RSA|OPENSSH|PRIVATE) KEY|password\s*=|token\s*=)' README.md docs scripts skills 2>/dev/null; then

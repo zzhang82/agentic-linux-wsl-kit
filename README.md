@@ -59,6 +59,8 @@ skills/
     SKILL.md                  # safe update workflow with preview/apply
   wsl-version-migration/
     SKILL.md                  # rollback-safe WSL migration workflow
+  wsl-security-routine/
+    SKILL.md                  # recurring security posture audit
 ```
 
 ### MVP1: linux-doctor
@@ -104,6 +106,30 @@ inventory -> backup/export -> install target -> bootstrap
 ```
 
 Important: `wsl --unregister` is intentionally not automated. The human must explicitly name and confirm the distro to remove.
+
+### MVP4: wsl-security-routine
+
+Use for recurring read-only security audits, secret detection, and vulnerability scanning.
+
+```bash
+# Daily check (fast, local, no-network)
+bash scripts/wsl-security-check.sh --daily
+
+# Weekly check (network enabled, Lynis, Gitleaks, Trivy)
+bash scripts/wsl-security-check.sh --weekly
+
+# Monthly deep check (SBOM, Grype, TruffleHog)
+bash scripts/wsl-security-check.sh --monthly
+
+# Pre-coding check (before an agent starts work)
+bash scripts/wsl-security-check.sh --preflight
+```
+
+Process:
+1. Identify mode (Daily, Weekly, Monthly, Preflight).
+2. Run `wsl-security-check.sh`.
+3. Review `~/.local/state/wsl-security/<run-id>/summary.json`.
+4. Propose safe, manual fix plan if risks are found.
 
 ## Install / use locally
 
