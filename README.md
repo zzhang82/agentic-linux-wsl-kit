@@ -13,6 +13,8 @@ It helps agents diagnose first, preview risky changes, block unsafe package comm
 
 **Tags:** `llm-agents` · `coding-agents` · `devsecops` · `supply-chain-security` · `npm-security` · `wsl` · `linux` · `automation`
 
+If Aegis Skills helps your agent workflow feel safer, a GitHub star helps others find it.
+
 ## How it works
 
 ```text
@@ -151,6 +153,7 @@ validation produces evidence
 
 - [Project overview](docs/project-overview.md)
 - [Active defense strategy](docs/agent-active-defense.md)
+- [Launch kit](docs/launch-kit.md)
 - [Repository metadata](docs/repository-metadata.md)
 - [npm supply-chain policy](docs/npm-supply-chain-policy.md)
 - [Security routine SOP](docs/security-routine-sop.md)
