@@ -11,7 +11,59 @@ Aegis Skills is **not an agent**. It is a set of reusable skills, scripts, wrapp
 
 It helps agents diagnose first, preview risky changes, block unsafe package commands, run approved installs in isolation, and leave behind machine-readable evidence.
 
-![Aegis Skills architecture](assets/agentic-linux-wsl-kit-architecture.svg)
+## How it works
+
+```text
+                 Aegis Skills
+        safe-by-default automation layer
+
+  human / existing agent request
+              |
+              v
+  +-------------------------+
+  | SKILL.md playbooks      |  what to run, when to stop,
+  | reusable SOPs           |  what evidence to collect
+  +-----------+-------------+
+              |
+              v
+  +-------------------------+       normal ops path
+  | deterministic scripts   |-------------------------------+
+  +-----------+-------------+                               |
+              |                                             v
+              |        +----------------+   +-------------------------+
+              |        | linux-doctor   |   | package-security-update |
+              |        | wsl migration  |   | wsl-security-routine    |
+              |        +----------------+   +-------------------------+
+              |                                             |
+              |                                             v
+              |                                  summary.json + logs
+              |
+              |       package-manager path
+              v
+  +-------------------------+
+  | safe-* wrappers         |  block npm/pnpm/yarn/bun/npx
+  +-----------+-------------+
+              |
+              v
+  +-------------------------+
+  | node-supply-chain-guard |  registry + lockfile + scripts
+  +-----------+-------------+
+              |
+              v
+  +-------------------------+
+  | approval gate           |  human reviews risk
+  +-----------+-------------+
+              |
+              v
+  +-------------------------+
+  | isolated execution      |  env -i, temp HOME, restricted PATH
+  +-----------+-------------+
+              |
+              v
+  +-------------------------+
+  | postinstall scan        |  gitleaks, trivy, grype/trufflehog
+  +-------------------------+
+```
 
 ## What it does
 
