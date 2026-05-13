@@ -16,6 +16,25 @@
 ### Stop reason, if any
 - None.
 
+## Checkpoint 8 - 2026-05-13 23:30
+
+### Changed
+- Finalized MVP4 (Security Routine) and MVP5 (Active Defense).
+- Verified that all success conditions for the "Publish-ready Agentic Linux WSL Kit" goal are met or exceeded.
+- Added 5 total skills and comprehensive security enforcement and auditing scripts.
+- Repository is now hardened and ready for public use as an agentic operating layer.
+
+### Validation
+- Command: `bash tests/smoke.sh`
+- Result: PASS.
+- Manual verification of isolated execution and cleanup traps confirmed.
+
+### Next
+- None. Goal completed.
+
+### Stop reason, if any
+- Goal successfully achieved.
+
 ## Checkpoint 7 - 2026-05-13 23:00
 
 ### Changed
