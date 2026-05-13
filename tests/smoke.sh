@@ -32,6 +32,14 @@ bash -n scripts/node-supply-chain-guard.sh
 echo "ok scripts/node-supply-chain-guard.sh"
 bash -n scripts/safe-npm.sh
 echo "ok scripts/safe-npm.sh"
+bash -n scripts/safe-npx.sh
+echo "ok scripts/safe-npx.sh"
+bash -n scripts/safe-pnpm.sh
+echo "ok scripts/safe-pnpm.sh"
+bash -n scripts/safe-yarn.sh
+echo "ok scripts/safe-yarn.sh"
+bash -n scripts/safe-bun.sh
+echo "ok scripts/safe-bun.sh"
 bash scripts/wsl-security-check.sh --list-tools >/tmp/agentic-linux-wsl-kit-tools.txt
 echo "ok scripts/wsl-security-check.sh --list-tools"
 python3 -m py_compile scripts/wsl-security-summarize.py

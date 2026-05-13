@@ -19,6 +19,7 @@ Modes:
   --request "CMD"    Interface for requesting a package operation
   --postinstall-scan Run security scans on the newly installed node_modules
   --list-scripts     Extract and list lifecycle scripts from package.json
+  --execute-approved "TYPE"  Execute a pre-approved safe command (e.g. npm-ci, pnpm-install)
 
 Options:
   --project PATH     Specific project directory (default: current)
@@ -33,6 +34,7 @@ while [ "${1:-}" != "" ]; do
   case "$1" in
     --preinstall|--review-lockfile|--postinstall-scan|--list-scripts) MODE="${1#--}"; shift ;;
     --request) MODE="request"; REQUEST_CMD="$2"; shift 2 ;;
+    --execute-approved) MODE="execute-approved"; REQUEST_CMD="$2"; shift 2 ;;
     --project) PROJECT_PATH="$2"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -91,12 +93,48 @@ case "$MODE" in
     echo "REASONING: raw install commands without --ignore-scripts are high-risk."
     echo "RECOMMENDATION: Use 'npm ci --ignore-scripts' or 'pnpm install --frozen-lockfile --ignore-scripts'."
     echo ""
-    echo "PROPOSED SAFE COMMAND:"
+    echo "PROPOSED SAFE EXECUTION:"
     if [[ "$REQUEST_CMD" == *"npm"* ]]; then
-      echo "env -i PATH=\"$PATH\" HOME=\"$HOME\" npm ci --ignore-scripts"
+      echo "  $0 --execute-approved npm-ci --project \"$PROJECT_PATH\""
     elif [[ "$REQUEST_CMD" == *"pnpm"* ]]; then
-      echo "env -i PATH=\"$PATH\" HOME=\"$HOME\" pnpm install --frozen-lockfile --ignore-scripts"
+      echo "  $0 --execute-approved pnpm-install --project \"$PROJECT_PATH\""
     fi
+    ;;
+
+  execute-approved)
+    echo "== Executing Approved Safe Command =="
+    TMP_HOME="$(mktemp -d)"
+    echo "INFO using isolated HOME: $TMP_HOME"
+    
+    # Strictly defined path + current node bin
+    NODE_BIN="$(dirname "$(command -v node 2>/dev/null || echo "/usr/bin/node")")"
+    SAFE_PATH="$NODE_BIN:/usr/local/bin:/usr/bin:/bin"
+    
+    case "$REQUEST_CMD" in
+      npm-ci)
+        echo "INFO running npm ci --ignore-scripts"
+        env -i \
+          HOME="$TMP_HOME" \
+          PATH="$SAFE_PATH" \
+          npm_config_userconfig="$TMP_HOME/.npmrc" \
+          npm_config_cache="$TMP_HOME/.npm-cache" \
+          npm ci --ignore-scripts
+        ;;
+      pnpm-install)
+        echo "INFO running pnpm install --frozen-lockfile --ignore-scripts"
+        env -i \
+          HOME="$TMP_HOME" \
+          PATH="$SAFE_PATH" \
+          PNPM_HOME="$TMP_HOME/.pnpm" \
+          npm_config_userconfig="$TMP_HOME/.npmrc" \
+          pnpm install --frozen-lockfile --ignore-scripts
+        ;;
+      *)
+        echo "ERROR unknown approved command type: $REQUEST_CMD"
+        exit 1
+        ;;
+    esac
+    rm -rf "$TMP_HOME"
     ;;
 
   postinstall-scan)

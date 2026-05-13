@@ -12,15 +12,15 @@ Instead of relying on the agent to "be secure," we enforce security via **interc
 
 ### 1. Interception Layer
 
-We provide shell wrappers (`scripts/safe-npm.sh`, etc.) that intercept dangerous commands. These wrappers block direct execution and redirect the agent to the security guard.
+We provide shell wrappers (`scripts/safe-npm.sh`, `scripts/safe-pnpm.sh`, etc.) that intercept dangerous commands. These wrappers block direct execution and redirect the agent to the security guard.
 
 ### 2. Policy Gating (The Guard)
 
 The `scripts/node-supply-chain-guard.sh` script acts as the enforcement brain. It:
 - Inspects project configuration for non-standard registries.
 - Reviews `package.json` for hidden lifecycle scripts.
-- Suggests safe alternatives (like `npm ci --ignore-scripts`).
-- Forces a stripped environment for package operations to prevent secret exfiltration.
+- Construct and executes pre-approved safe commands via `--execute-approved`.
+- Forces a strictly isolated environment (temporary `HOME`, restricted `PATH`) for package operations.
 
 ### 3. Isolated Execution
 
