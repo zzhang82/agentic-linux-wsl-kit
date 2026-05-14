@@ -1,6 +1,10 @@
 # Local agent/editor workspace files
 .opencode/
 
+# Internal project management/launch docs
+docs/launch-kit.md
+docs/repository-metadata.md
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
