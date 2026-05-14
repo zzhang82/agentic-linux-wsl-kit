@@ -1,0 +1,8 @@
+#!/bin/bash
+# Aegis post-merge hook
+
+# Resolve repo root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Run Aegis trigger
+bash "$REPO_ROOT/scripts/aegis-trigger.sh" --event git-post-merge --project "$REPO_ROOT"

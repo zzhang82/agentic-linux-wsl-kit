@@ -1,0 +1,8 @@
+#!/bin/bash
+# Aegis pre-commit hook
+
+# Resolve repo root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Run Aegis trigger
+bash "$REPO_ROOT/scripts/aegis-trigger.sh" --event git-pre-commit --project "$REPO_ROOT"

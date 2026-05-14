@@ -75,7 +75,8 @@ If Aegis Skills helps your agent workflow feel safer, a GitHub star helps others
 - **Preview package/security updates** before applying changes.
 - **Guide rollback-safe WSL migration** workflows.
 - **Run recurring security audits** with structured `summary.json` output.
-- **Intercept risky npm/pnpm/yarn/bun/npx commands** and route them through a supply-chain guard.
+- **Intercept risky npm/pnpm/yarn/bun/npx commands** via a unified trigger dispatcher.
+- **Enforce safety at the workflow boundary** with local git hooks and session launchers.
 
 ## Quick start
 
@@ -85,48 +86,23 @@ cd agentic-linux-wsl-kit
 bash tests/smoke.sh
 ```
 
-Run a health check:
+### Install the Safety Harness
+
+Activate the trigger layers (wrappers and git hooks):
 
 ```bash
-bash scripts/linux-doctor.sh
+bash scripts/install-aegis-triggers.sh --all
 ```
 
-Run a security preflight before agent work:
+### Launch a Safe Session
+
+Use Aegis as the "front door" for your coding agent or shell:
 
 ```bash
-bash scripts/wsl-security-check.sh --preflight --project .
+bash scripts/aegis-agent-session.sh --project . -- opencode
 ```
 
-Install package-manager wrappers for active defense:
-
-```bash
-mkdir -p ~/.local/bin
-ln -sf "$PWD/scripts/safe-npm.sh" ~/.local/bin/npm
-ln -sf "$PWD/scripts/safe-npx.sh" ~/.local/bin/npx
-ln -sf "$PWD/scripts/safe-pnpm.sh" ~/.local/bin/pnpm
-ln -sf "$PWD/scripts/safe-yarn.sh" ~/.local/bin/yarn
-ln -sf "$PWD/scripts/safe-bun.sh" ~/.local/bin/bun
-```
-
-Then risky commands are blocked:
-
-```bash
-npm install axios
-```
-
-Expected:
-
-```text
-BLOCKED: raw npm install is not allowed in this environment.
-```
-
-Use the guard instead:
-
-```bash
-bash scripts/node-supply-chain-guard.sh --request "npm install axios" --project .
-bash scripts/node-supply-chain-guard.sh --execute-approved npm-ci --project .
-bash scripts/node-supply-chain-guard.sh --postinstall-scan --project .
-```
+This ensures a security preflight runs, safe wrappers are in the `PATH`, and all risky commands are intercepted.
 
 ## Included skills
 
@@ -136,6 +112,7 @@ package-security-update
 wsl-version-migration
 wsl-security-routine
 node-supply-chain-guard
+aegis-trigger-layer
 ```
 
 ## Safety model
