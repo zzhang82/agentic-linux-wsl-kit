@@ -153,8 +153,6 @@ validation produces evidence
 
 - [Project overview](docs/project-overview.md)
 - [Active defense strategy](docs/agent-active-defense.md)
-- [Launch kit](docs/launch-kit.md)
-- [Repository metadata](docs/repository-metadata.md)
 - [npm supply-chain policy](docs/npm-supply-chain-policy.md)
 - [Security routine SOP](docs/security-routine-sop.md)
 - [Threat model](docs/threat-model.md)
