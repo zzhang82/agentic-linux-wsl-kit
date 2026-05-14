@@ -53,56 +53,68 @@ log_event() {
     echo "[Aegis] Event: $EVENT | Project: $PROJECT_DIR"
 }
 
+run_cmd() {
+    local cmd=("$@")
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[DRY-RUN] ${cmd[*]}"
+    else
+        "${cmd[@]}" || {
+            local exit_code=$?
+            if [[ "$STRICT" == true ]]; then
+                exit $exit_code
+            else
+                echo "Warning: Command failed with exit code $exit_code, but continuing due to --non-strict"
+            fi
+        }
+    fi
+}
+
 case "$EVENT" in
     agent-start)
         log_event
         echo "Running preflight security check..."
-        bash "$SCRIPT_DIR/wsl-security-check.sh" --preflight --project "$PROJECT_DIR"
+        run_cmd bash "$SCRIPT_DIR/wsl-security-check.sh" --preflight --project "$PROJECT_DIR"
         ;;
 
     package-command)
         log_event
         # EXTRA_ARGS contains the full command, e.g. "npm install axios"
-        bash "$SCRIPT_DIR/node-supply-chain-guard.sh" --request "${EXTRA_ARGS[*]}" --project "$PROJECT_DIR"
+        run_cmd bash "$SCRIPT_DIR/node-supply-chain-guard.sh" --request "${EXTRA_ARGS[*]}" --project "$PROJECT_DIR"
         ;;
 
     git-pre-commit)
         log_event
         echo "Running pre-commit secret scan (Gitleaks)..."
-        # We run gitleaks in protect mode if available, otherwise --preflight
         if command -v gitleaks &> /dev/null; then
-            gitleaks protect --staged --verbose --redact
+            run_cmd gitleaks protect --staged --verbose --redact
         else
-            bash "$SCRIPT_DIR/wsl-security-check.sh" --preflight --project "$PROJECT_DIR"
+            run_cmd bash "$SCRIPT_DIR/wsl-security-check.sh" --preflight --project "$PROJECT_DIR"
         fi
         ;;
 
     git-pre-push)
         log_event
         echo "Running pre-push health and security audit..."
-        bash "$SCRIPT_DIR/linux-doctor.sh"
-        bash "$SCRIPT_DIR/wsl-security-check.sh" --preflight --project "$PROJECT_DIR"
-        # Optional: run tests
+        run_cmd bash "$SCRIPT_DIR/linux-doctor.sh"
+        run_cmd bash "$SCRIPT_DIR/wsl-security-check.sh" --preflight --project "$PROJECT_DIR"
         if [[ -f "$PROJECT_DIR/tests/smoke.sh" ]]; then
-            bash "$PROJECT_DIR/tests/smoke.sh"
+            run_cmd bash "$PROJECT_DIR/tests/smoke.sh"
         fi
         ;;
 
     git-post-merge)
         log_event
         echo "Reviewing lockfile changes..."
-        # Logic to check if lockfiles changed in the last merge
         if git diff-tree -r --name-only HEAD@{1} HEAD | grep -qE "package-lock.json|pnpm-lock.yaml|yarn.lock|bun.lockb"; then
             echo "Lockfile change detected. Running security review..."
-            # Placeholder for future lockfile audit script
-            bash "$SCRIPT_DIR/node-supply-chain-guard.sh" --postinstall-scan --project "$PROJECT_DIR"
+            run_cmd bash "$SCRIPT_DIR/node-supply-chain-guard.sh" --review-lockfile --project "$PROJECT_DIR"
         fi
         ;;
 
     daily|weekly|monthly)
         log_event
         echo "Running $EVENT routine..."
-        bash "$SCRIPT_DIR/wsl-security-check.sh" "--$EVENT" --project "$PROJECT_DIR"
+        run_cmd bash "$SCRIPT_DIR/wsl-security-check.sh" "--$EVENT" --project "$PROJECT_DIR"
         ;;
 
     *)

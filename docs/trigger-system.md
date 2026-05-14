@@ -26,6 +26,7 @@ Local git hooks enforce policy at commit, push, and merge boundaries.
 Systemd user timers run recurring security audits.
 - **Trigger**: Daily, weekly, or monthly intervals.
 - **Action**: Full security checks and inventory reports.
+- **Status**: Planned for MVP6b. The installer currently prepares the systemd user directory only.
 
 ---
 
