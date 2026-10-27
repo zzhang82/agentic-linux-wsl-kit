@@ -31,9 +31,9 @@ npm/pnpm/yarn/bun/npx command
   -> postinstall scan
 ```
 
-## MVPs delivered
+## Core Modules
 
-### MVP1: linux-doctor
+### 1. linux-doctor
 
 Read-only Linux/WSL diagnostics.
 
@@ -44,7 +44,7 @@ bash scripts/linux-doctor.sh --format json
 
 Checks include OS/kernel, WSL/systemd, PATH, required and recommended tools, package manager health, Docker daemon reachability, and secret directory metadata.
 
-### MVP2: package-security-update
+### 2. package-security-update
 
 Safe package/security checks and approved updates.
 
@@ -60,7 +60,7 @@ Workflow:
 baseline doctor -> package check -> summarize changes -> human approval -> apply -> doctor after
 ```
 
-### MVP3: wsl-version-migration
+### 3. wsl-version-migration
 
 Rollback-safe WSL distro migration workflow.
 
@@ -70,7 +70,7 @@ inventory -> backup/export -> install target -> bootstrap -> migrate selected da
 
 `wsl --unregister` is intentionally not automated.
 
-### MVP4: wsl-security-routine
+### 4. wsl-security-routine
 
 Recurring read-only security posture checks with structured evidence.
 
@@ -100,7 +100,7 @@ grype.json
 trufflehog.json
 ```
 
-### MVP5: node-supply-chain-guard
+### 5. node-supply-chain-guard
 
 Active defense for package-manager operations.
 
@@ -114,6 +114,17 @@ bash scripts/node-supply-chain-guard.sh --postinstall-scan --project .
 
 The guard blocks raw installs, checks registry and lockfile state, reviews lifecycle scripts, requires approval, executes in a stripped environment, and scans after install.
 
+### 6. wsl-safe-maintenance-doctor
+
+Read-only routine-maintenance inventory and classification layer across Linux/WSL health, package state, disks, caches, journals, Docker, and immediate home-root sizes.
+
+```bash
+python3 scripts/wsl-maintenance-audit.py
+python3 scripts/wsl-maintenance-audit.py --output /tmp/wsl-maintenance-audit
+```
+
+It deliberately stops before package updates, cache cleaning, Docker removal, WSL shutdown, export, or VHD compaction. It generates structured `audit.json` and human `report.md` with owner-only (`0600`) permissions.
+
 ## Skills included
 
 ```text
@@ -122,7 +133,9 @@ skills/
   package-security-update/
   wsl-version-migration/
   wsl-security-routine/
+  wsl-safe-maintenance-doctor/
   node-supply-chain-guard/
+  aegis-trigger-layer/
 ```
 
 ## Safety model
@@ -166,6 +179,6 @@ bash scripts/wsl-security-check.sh --weekly --project .
 bash scripts/wsl-security-check.sh --monthly --project .
 ```
 
-## Possible next milestone
+## Future roadmap
 
-MVP6: containerized package quarantine. Run suspicious dependency operations in disposable containers with read-only project mounts and no access to the real WSL home directory.
+Containerized package quarantine: run suspicious dependency operations in disposable containers with read-only project mounts and zero access to the real WSL home directory.

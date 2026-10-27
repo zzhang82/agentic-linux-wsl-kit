@@ -93,7 +93,7 @@ case ":${PATH:-}:" in *":/mnt/c/Windows:"*|*":/mnt/c/Windows/System32:"*) status
 
 section "commands"
 required=(git curl jq rg python3)
-recommended=(gh fd fzf tmux direnv make gcc g++ pkg-config uv pipx node npm pnpm corepack gcloud docker opencode claude gemini task-master)
+recommended=(gh fd fzf tmux direnv make gcc g++ pkg-config uv pipx node npm pnpm corepack gcloud docker agent-local claude)
 for c in "${required[@]}"; do
   p="$(cmd_path "$c")"
   if [ -n "$p" ]; then
@@ -104,6 +104,9 @@ for c in "${required[@]}"; do
 done
 for c in "${recommended[@]}"; do
   p="$(cmd_path "$c")"
+  if [ "$c" = "fd" ] && [ -z "$p" ]; then
+    p="$(cmd_path fdfind)"
+  fi
   if [ -n "$p" ]; then
     status_line OK "cmd.$c" "$p"
   else
@@ -122,6 +125,7 @@ for spec in \
   "gh::gh --version" \
   "gcloud::gcloud --version" \
   "docker::docker --version" \
+  "agent-local::agent-local --version" \
   "opencode::opencode --version"; do
   name="${spec%%::*}"; cmd="${spec#*::}"
   if have "$name"; then status_line INFO "version.$name" "$(bash -lc "$cmd" 2>/dev/null | sed -n '1p')"; fi

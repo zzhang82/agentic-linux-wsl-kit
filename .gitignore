@@ -5,6 +5,11 @@
 docs/launch-kit.md
 docs/repository-metadata.md
 
+# Dependencies and package managers
+node_modules/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
+__pycache__/
+*.py[cod]

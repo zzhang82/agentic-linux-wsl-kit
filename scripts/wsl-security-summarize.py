@@ -97,7 +97,22 @@ def summarize(run_dir):
                         "message": f"{len(leaks)} potential secrets detected in {gitleaks_json.name}"
                     })
         except (json.JSONDecodeError, ValueError):
+            summary["findings"].append({
+                "source": "gitleaks",
+                "level": "FAIL",
+                "area": "secrets",
+                "message": f"Malformed or corrupted scan output in {gitleaks_json.name}"
+            })
             continue
+
+    gitleaks_err = run_path / "gitleaks-error.txt"
+    if gitleaks_err.exists() and gitleaks_err.stat().st_size > 0:
+        summary["findings"].append({
+            "source": "gitleaks",
+            "level": "FAIL",
+            "area": "secrets",
+            "message": f"Gitleaks execution error: {gitleaks_err.read_text().strip()}"
+        })
 
     # 4. Check for lynis findings
     lynis_file = run_path / "lynis.txt"
@@ -162,6 +177,16 @@ def summarize(run_dir):
             pass
 
     # 7. Check for trufflehog findings
+    trufflehog_err = run_path / "trufflehog-error.txt"
+    if trufflehog_err.exists() and trufflehog_err.stat().st_size > 0:
+        err_text = trufflehog_err.read_text().strip()
+        summary["findings"].append({
+            "source": "trufflehog",
+            "level": "FAIL",
+            "area": "secrets",
+            "message": f"TruffleHog runtime error: {err_text[:200]}"
+        })
+
     trufflehog_json = run_path / "trufflehog.json"
     if trufflehog_json.exists():
         try:

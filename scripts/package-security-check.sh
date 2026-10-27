@@ -6,17 +6,24 @@ usage() {
 package-security-check.sh - read-only package and security posture check
 
 Usage:
-  scripts/package-security-check.sh [--no-network] [--format text|json] [--help]
+  scripts/package-security-check.sh [--refresh-metadata] [--no-network] [--format text|json] [--help]
 
-Default mode may refresh package metadata with apt-get update when sudo is available.
---no-network skips metadata refresh and package manager network operations.
+Options:
+  --refresh-metadata  Explicitly refresh package metadata with apt-get update (requires sudo).
+  --no-network        Skip all network-dependent operations and checks.
+  --format text|json  Output format (default: text).
+  --help, -h          Show this help.
+
+By default, the check is strictly read-only and uses local repository metadata.
 EOF
 }
 
+REFRESH_METADATA=0
 NO_NETWORK=0
 FORMAT="text"
 while [ "${1:-}" != "" ]; do
   case "$1" in
+    --refresh-metadata|--refresh) REFRESH_METADATA=1; shift ;;
     --no-network) NO_NETWORK=1; shift ;;
     --format) FORMAT="${2:-text}"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
@@ -50,26 +57,32 @@ if ! command -v apt-get >/dev/null 2>&1; then
   exit 0
 fi
 
-if [ "$NO_NETWORK" -eq 0 ]; then
+if [ "$REFRESH_METADATA" -eq 1 ] && [ "$NO_NETWORK" -eq 0 ]; then
   if sudo -n true 2>/dev/null; then
     sudo apt-get update >/dev/null 2>&1
     status_line INFO apt "metadata refreshed"
   else
     status_line WARN apt "sudo without prompt is unavailable; skipping apt-get update"
   fi
+elif [ "$REFRESH_METADATA" -eq 1 ] && [ "$NO_NETWORK" -eq 1 ]; then
+  status_line INFO apt "skipping update (no-network requested)"
 else
-  status_line INFO apt "skipping update (no-network)"
+  status_line INFO apt "using local package metadata (pass --refresh-metadata to update)"
 fi
 
-audit_count="$(dpkg --audit | wc -l)"
+audit_count="$(dpkg --audit 2>/dev/null | wc -l || echo "0")"
 status_line INFO dpkg "audit lines: $audit_count"
 
 section "upgradable packages"
 if [ "$FORMAT" = "text" ]; then
   apt list --upgradable 2>/dev/null || true
 else
-  upgradable_count="$(apt list --upgradable 2>/dev/null | grep -c '/' || true)"
-  status_line INFO apt "upgradable packages: $upgradable_count"
+  if upgradable_raw="$(apt list --upgradable 2>&1)"; then
+    upgradable_count="$(printf '%s\n' "$upgradable_raw" | grep -c '/' || true)"
+    status_line INFO apt "upgradable packages: $upgradable_count"
+  else
+    status_line WARN apt "could not query upgradable packages"
+  fi
 fi
 
 section "security-related tools"
@@ -79,17 +92,21 @@ if [ "$FORMAT" = "text" ]; then
 fi
 
 section "language ecosystem audits"
-if command -v npm >/dev/null 2>&1 && [ -f package-lock.json ]; then
-  if [ "$FORMAT" = "text" ]; then
-    npm audit --omit=dev || true
-  else
-    status_line INFO npm "package-lock.json detected; run npm audit for details"
-  fi
+if [ "$NO_NETWORK" -eq 1 ] || [ "$REFRESH_METADATA" -eq 0 ]; then
+  status_line INFO ecosystem "skipped language ecosystem network checks (pass --refresh-metadata to query online registries)"
 else
-  status_line INFO npm "skipped: no package-lock.json or npm missing"
-fi
-if command -v uv >/dev/null 2>&1 && [ -f pyproject.toml ]; then
-  status_line INFO uv "Python project detected; consider: uv run pip-audit (if pip-audit is configured)"
+  if command -v npm >/dev/null 2>&1 && [ -f package-lock.json ]; then
+    if [ "$FORMAT" = "text" ]; then
+      npm audit --omit=dev 2>/dev/null || true
+    else
+      status_line INFO npm "package-lock.json detected; run npm audit for details"
+    fi
+  else
+    status_line INFO npm "skipped: no package-lock.json or npm missing"
+  fi
+  if command -v uv >/dev/null 2>&1 && [ -f pyproject.toml ]; then
+    status_line INFO uv "Python project detected; consider: uv run pip-audit"
+  fi
 fi
 
 section "summary"

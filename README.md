@@ -1,84 +1,86 @@
 # Aegis Skills
 
-[![Status](https://img.shields.io/badge/status-publish--ready-brightgreen)](#)
+[![Status](https://img.shields.io/badge/status-stable-brightgreen)](#)
+[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](#)
 [![Platform](https://img.shields.io/badge/platform-WSL2%20%7C%20Ubuntu-blue)](#)
 [![Safety](https://img.shields.io/badge/default-read--only%20%2F%20guarded-success)](#safety-model)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**Secure automation skills for Linux/WSL and LLM coding-agent workflows.**
+**Security automation skills and active defenses for Linux/WSL coding-agent environments.**
 
-Aegis Skills is **not an agent**. It is a set of reusable skills, scripts, wrappers, and SOPs that existing agents or humans can run to keep Linux/WSL environments safer by default.
-
-It helps agents diagnose first, preview risky changes, block unsafe package commands, run approved installs in isolation, and leave behind machine-readable evidence.
+Aegis Skills is a battle-tested safety harness for human developers and autonomous coding agents (Cursor, Claude Code, Codex, and interactive shells). It enforces safe-by-default execution: diagnose before modifying, preview risky changes, intercept untrusted package manager commands, execute approved installs in isolation, and record verifiable, machine-readable evidence.
 
 **Tags:** `llm-agents` · `coding-agents` · `devsecops` · `supply-chain-security` · `npm-security` · `wsl` · `linux` · `automation`
 
-If Aegis Skills helps your agent workflow feel safer, a GitHub star helps others find it.
+---
 
-## How it works
+## Architecture
 
 ```text
-                 Aegis Skills
-        safe-by-default automation layer
+                           Aegis Skills
+                 Safe-by-Default Automation Layer
 
-  human / existing agent request
-              |
-              v
-  +-------------------------+
-  | SKILL.md playbooks      |  what to run, when to stop,
-  | reusable SOPs           |  what evidence to collect
-  +-----------+-------------+
-              |
-              v
-  +-------------------------+       normal ops path
-  | deterministic scripts   |-------------------------------+
-  +-----------+-------------+                               |
-              |                                             v
-              |        +----------------+   +-------------------------+
-              |        | linux-doctor   |   | package-security-update |
-              |        | wsl migration  |   | wsl-security-routine    |
-              |        +----------------+   +-------------------------+
-              |                                             |
-              |                                             v
-              |                                  summary.json + logs
-              |
-              |       package-manager path
-              v
-  +-------------------------+
-  | safe-* wrappers         |  block npm/pnpm/yarn/bun/npx
-  +-----------+-------------+
-              |
-              v
-  +-------------------------+
-  | node-supply-chain-guard |  registry + lockfile + scripts
-  +-----------+-------------+
-              |
-              v
-  +-------------------------+
-  | approval gate           |  human reviews risk
-  +-----------+-------------+
-              |
-              v
-  +-------------------------+
-  | isolated execution      |  env -i, temp HOME, restricted PATH
-  +-----------+-------------+
-              |
-              v
-  +-------------------------+
-  | postinstall scan        |  gitleaks, trivy, grype/trufflehog
-  +-------------------------+
+               Human or Agent Task Request
+                           |
+                           v
+            +-------------------------------+
+            | SKILL.md Playbooks & SOPs     |  Define scope, stop boundaries,
+            | Reusable Agent Protocols      |  and evidence contracts
+            +---------------+---------------+
+                            |
+            +---------------+---------------+
+            |                               |
+     [Operational Path]              [Package Manager Path]
+            |                               |
+            v                               v
++-----------------------+       +-------------------------------+
+| Deterministic Scripts |       | Cooperative safe-* Wrappers   |  Intercepts npm, pnpm,
+| - linux-doctor        |       | (PATH-based interception)     |  yarn, bun, and npx
+| - maintenance-audit   |       +---------------+---------------+
+| - security-check      |                       |
+| - version-migration   |                       v
++-----------+-----------+       +-------------------------------+
+            |                   | node-supply-chain-guard       |  Checks registries,
+            |                   | Lifecycle script reviewer     |  lockfiles, & scripts
+            |                   +---------------+---------------+
+            |                                   |
+            |                                   v
+            |                   +-------------------------------+
+            |                   | Explicit Approval Gate        |  Human reviews risk
+            |                   +---------------+---------------+
+            |                                   |
+            |                                   v
+            |                   +-------------------------------+
+            |                   | Sanitized / Isolated Exec     |  temp HOME, clean PATH,
+            |                   | --ignore-scripts enforcement  |  post-install scans
+            |                   +---------------+---------------+
+            v                                   |
+    +-------------------------------------------+
+    |
+    v
++-------------------------------+
+| Machine-Readable Evidence     |  summary.json, report.md, audit logs
+| Owner-Only Permissions (0600) |  Strict fail-closed error propagation
++-------------------------------+
 ```
 
-## What it does
+---
 
-- **Diagnose Linux/WSL health** with read-only checks.
-- **Preview package/security updates** before applying changes.
-- **Guide rollback-safe WSL migration** workflows.
-- **Run recurring security audits** with structured `summary.json` output.
-- **Intercept risky npm/pnpm/yarn/bun/npx commands** via a unified trigger dispatcher.
-- **Enforce safety at the workflow boundary** with local git hooks and session launchers.
+## Core Capabilities
 
-## Quick start
+| Capability | Module | Description | Entry Point |
+|---|---|---|---|
+| **Environment Diagnostics** | `linux-doctor` | Read-only audit of OS, kernel, WSL/systemd health, pure Linux PATH, command availability, and secret directory metadata. | `scripts/linux-doctor.sh` |
+| **Gated Package Updates** | `package-security-update` | Offline package check with explicit approval gates before applying APT security upgrades. | `scripts/package-security-check.sh` |
+| **Safe Maintenance Audit** | `wsl-safe-maintenance-doctor` | Non-destructive classification of root storage, Windows C: pressure, Docker layers, journals, and developer caches. | `scripts/wsl-maintenance-audit.py` |
+| **Supply Chain Guard** | `node-supply-chain-guard` | Intercepts dangerous package manager lifecycle scripts and runs approved installs under sanitized environments. | `scripts/node-supply-chain-guard.sh` |
+| **Command Interception** | `aegis-trigger-layer` | Unified dispatcher connecting preflight checks, git hooks, and safe command wrappers. | `scripts/aegis-trigger.sh` |
+| **Security Routines** | `wsl-security-routine` | Scheduled posture scans, SBOM generation, and secret detection with strict error propagation. | `scripts/wsl-security-check.sh` |
+| **WSL Distro Migration** | `wsl-version-migration` | Rollback-safe distro upgrade and export/import workflows with automated inventory checks. | `scripts/wsl-inventory.sh` |
+
+---
+
+## Quick Start
 
 ```bash
 git clone https://github.com/zzhang82/agentic-linux-wsl-kit.git
@@ -86,68 +88,48 @@ cd agentic-linux-wsl-kit
 bash tests/smoke.sh
 ```
 
-### Install the Safety Harness
+### 1. Install Trigger Harness & Command Wrappers
 
-Activate the trigger layers (wrappers and git hooks):
+Install safe command interceptors and git hooks to your user environment:
 
 ```bash
 bash scripts/install-aegis-triggers.sh --all
 ```
 
-### Launch a Safe Session
+This symlinks `safe-*.sh` wrappers into `~/.local/bin/` to intercept common risky commands (`npm install`, `npm ci`, `pnpm add`, `yarn`, `bun add`, `npx`) and route them through security review.
 
-Use Aegis as the "front door" for your coding agent or shell:
+### 2. Launch a Protected Agent Session
+
+Run coding agents or shells through the Aegis front door:
 
 ```bash
-bash scripts/aegis-agent-session.sh --project . -- opencode
+bash scripts/aegis-agent-session.sh --project . -- agent-local
 ```
 
-This ensures a security preflight runs, safe wrappers are in the `PATH`, and all risky commands are intercepted.
+Before your agent session begins, Aegis runs a preflight security check (scanning for secrets and verifying environment integrity) and sets up the active wrapper PATH.
 
-## Included skills
+---
 
-```text
-linux-doctor
-package-security-update
-wsl-version-migration
-wsl-security-routine
-node-supply-chain-guard
-aegis-trigger-layer
-```
+## Safety Model & Invariants
 
-## Safety model
+1. **Read-Only by Default:** Diagnostic and audit scripts (`linux-doctor`, `package-security-check`, `wsl-maintenance-audit`) never mutate files, install packages, or clean caches without explicit, separate approval.
+2. **Private Evidence Storage:** All generated audit manifests and security outputs are stored in owner-only directories (`0700`) with restricted file modes (`0600`).
+3. **Fail-Closed Preflights:** Scanner runtime failures or secret detections block agent session startup in strict mode.
+4. **Cooperative Interception Boundary:** Aegis operates as a cooperative layer for agent and interactive terminal sessions via PATH wrappers and preflight hooks. Absolute container isolation and disposable quarantine represent the next stage of active defense.
+5. **No Secret Disclosure:** Secrets are redacted in scanner outputs where supported; secret files are inspected for metadata/permissions only and contents are never printed.
 
-```text
-read-only by default
-preview before mutation
-explicit approval for risky actions
-package installs are intercepted and guard-owned
-secrets are never printed
-validation produces evidence
-```
+---
 
-## More docs
+## Documentation
 
-- [Project overview](docs/project-overview.md)
-- [Active defense strategy](docs/agent-active-defense.md)
-- [npm supply-chain policy](docs/npm-supply-chain-policy.md)
-- [Security routine SOP](docs/security-routine-sop.md)
-- [Threat model](docs/threat-model.md)
-- [Recovery guide](docs/recovery.md)
+- [Project Overview](docs/project-overview.md)
+- [Active Defense Strategy](docs/agent-active-defense.md)
+- [Node & npm Supply-Chain Policy](docs/npm-supply-chain-policy.md)
+- [Security Routine SOP](docs/security-routine-sop.md)
+- [Threat Model](docs/threat-model.md)
+- [Recovery Guide](docs/recovery.md)
 
-## Status
-
-MVP1-MVP5 are complete:
-
-```text
-MVP1 diagnostics
-MVP2 safe package updates
-MVP3 WSL migration workflow
-MVP4 read-only security routine
-MVP5 active package-operation defense
-```
-
-Possible next milestone: **MVP6 containerized package quarantine**.
+---
 
 ## License
 

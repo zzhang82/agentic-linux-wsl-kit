@@ -1,3 +1,9 @@
+---
+name: aegis-trigger-layer
+description: Use when installing or operating the Aegis Linux/WSL safety dispatcher for agent-start, Git, scheduled security, or Node package-command events. Routes risky actions through read-only preflight, approval, and guarded execution instead of raw commands.
+version: 1.0.0
+---
+
 # aegis-trigger-layer
 
 Unified dispatcher for safety events in Linux/WSL environments.

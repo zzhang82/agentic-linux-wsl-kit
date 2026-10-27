@@ -15,7 +15,7 @@ show_help() {
     echo "Usage: $0 [--project <dir>] -- <command> [args...]"
     echo ""
     echo "Example:"
-    echo "  $0 --project . -- opencode"
+    echo "  $0 --project . -- agent-local"
     echo "  $0 --project . -- bash"
 }
 

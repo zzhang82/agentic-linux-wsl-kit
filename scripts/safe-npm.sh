@@ -1,13 +1,38 @@
 #!/usr/bin/env bash
 # safe-npm.sh - Interceptor for npm to enforce Aegis security policy
 
-# Prevent wrapper recursion by excluding ~/.local/bin from the search path
-REAL_NPM="$(PATH="$(echo "$PATH" | tr ':' '\n' | grep -vE "$HOME/.local/bin|$(dirname "${BASH_SOURCE[0]}")" | paste -sd ':' -)" command -v npm)"
-TRIGGER_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/aegis-trigger.sh"
+SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+REAL_NPM="$(PATH="$(echo "$PATH" | tr ':' '\n' | grep -vE "^($HOME/\.local/bin|$SCRIPT_DIR)\$" | paste -sd ':' -)" command -v npm)"
+TRIGGER_SCRIPT="$SCRIPT_DIR/aegis-trigger.sh"
 
-case "$1" in
-  install|update|add|exec|run|publish|token|owner|dist-tag)
-    echo "BLOCKED: raw npm $1 is not allowed in this environment." >&2
+SUBCMD=""
+skip_next=false
+for arg in "$@"; do
+  if [[ "$skip_next" == true ]]; then
+    skip_next=false
+    continue
+  fi
+  case "$arg" in
+    --prefix|--cwd|--dir|-C|--workspace|-w|--registry|--cache|--userconfig)
+      skip_next=true
+      continue
+      ;;
+    --prefix=*|--cwd=*|--dir=*|--workspace=*|--registry=*|--cache=*|--userconfig=*)
+      continue
+      ;;
+    -*)
+      continue
+      ;;
+    *)
+      SUBCMD="$arg"
+      break
+      ;;
+  esac
+done
+
+case "$SUBCMD" in
+  install|i|ci|update|up|upgrade|add|exec|run|run-script|publish|token|owner|dist-tag|rebuild)
+    echo "BLOCKED: raw npm $SUBCMD is not allowed in this environment." >&2
     echo "Routing to Aegis Trigger Layer..." >&2
     bash "$TRIGGER_SCRIPT" --event package-command --project "$PWD" -- "npm $*"
     exit 1

@@ -61,10 +61,12 @@ if [ "$MODE" = "list-tools" ]; then
   exit 0
 fi
 
-# Setup run directory
+# Setup run directory with owner-only permissions
+umask 077
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 RUN_DIR="$STATE_DIR/${MODE}-${TIMESTAMP}"
 mkdir -p "$RUN_DIR"
+chmod 0700 "$RUN_DIR"
 
 echo "INFO starting $MODE security check"
 echo "INFO run directory: $RUN_DIR"
@@ -138,7 +140,12 @@ if [ "$MODE" = "weekly" ] || [ "$MODE" = "monthly" ]; then
   if have gitleaks; then
     echo "INFO running gitleaks"
     if [ -d "$PROJECT_PATH/.git" ]; then
-      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact --report-format json --report-path "$RUN_DIR/gitleaks-project.json" > "$RUN_DIR/gitleaks-project.txt" 2>&1 || true
+      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact --report-format json --report-path "$RUN_DIR/gitleaks-project.json" > "$RUN_DIR/gitleaks-project.txt" 2>&1 || {
+        gl_exit=$?
+        if [ "$gl_exit" -ne 1 ]; then
+          echo "Gitleaks runtime failure (exit code: $gl_exit)" > "$RUN_DIR/gitleaks-error.txt"
+        fi
+      }
     fi
   fi
 
@@ -152,7 +159,12 @@ if [ "$MODE" = "monthly" ]; then
   if have trufflehog; then
     echo "INFO running trufflehog"
     # Prefer JSON output for safer parsing and redaction
-    trufflehog filesystem "$PROJECT_PATH" --only-verified --json > "$RUN_DIR/trufflehog.json" 2> "$RUN_DIR/trufflehog-error.txt" || true
+    trufflehog filesystem "$PROJECT_PATH" --only-verified --json > "$RUN_DIR/trufflehog.json" 2> "$RUN_DIR/trufflehog-error.txt" || {
+      th_exit=$?
+      if [ "$th_exit" -ne 0 ]; then
+        echo "TruffleHog runtime failure (exit code: $th_exit)" >> "$RUN_DIR/trufflehog-error.txt"
+      fi
+    }
   fi
 
   if have syft && have grype; then
@@ -174,15 +186,31 @@ if [ "$MODE" = "preflight" ]; then
     git -C "$PROJECT_PATH" status --short --branch > "$RUN_DIR/git-status.txt" 2>&1 || true
     if have gitleaks; then
       echo "INFO running gitleaks preflight"
-      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact --report-format json --report-path "$RUN_DIR/gitleaks-preflight.json" > "$RUN_DIR/gitleaks-preflight.txt" 2>&1 || true
+      gitleaks detect --source "$PROJECT_PATH" --no-banner --redact --report-format json --report-path "$RUN_DIR/gitleaks-preflight.json" > "$RUN_DIR/gitleaks-preflight.txt" 2>&1 || {
+        gl_exit=$?
+        if [ "$gl_exit" -ne 1 ]; then
+          echo "Gitleaks runtime failure (exit code: $gl_exit)" > "$RUN_DIR/gitleaks-error.txt"
+        fi
+      }
     fi
   fi
 fi
 
 # 5. Summarize
+SUMMARIZE_EXIT=0
 if have python3; then
   echo "INFO aggregating results"
-  python3 "$BASE_DIR/scripts/wsl-security-summarize.py" "$RUN_DIR" > "$RUN_DIR/summary.json" 2>&1 || true
+  python3 "$BASE_DIR/scripts/wsl-security-summarize.py" "$RUN_DIR" > "$RUN_DIR/summary.json" 2>&1 || SUMMARIZE_EXIT=$?
+fi
+
+if [ "$SUMMARIZE_EXIT" -ne 0 ]; then
+  echo "ERROR security summarizer failed with exit code $SUMMARIZE_EXIT" >&2
+  exit "$SUMMARIZE_EXIT"
+fi
+
+if [ -f "$RUN_DIR/summary.json" ] && grep -q '"status": "FAIL"' "$RUN_DIR/summary.json"; then
+  echo "ERROR security check completed with FAIL status in $RUN_DIR/summary.json" >&2
+  exit 1
 fi
 
 echo "DONE check complete. Results in $RUN_DIR"

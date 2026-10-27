@@ -94,10 +94,14 @@ case "$MODE" in
     echo "RECOMMENDATION: Use 'npm ci --ignore-scripts' or 'pnpm install --frozen-lockfile --ignore-scripts'."
     echo ""
     echo "PROPOSED SAFE EXECUTION:"
-    if [[ "$REQUEST_CMD" == *"npm"* ]]; then
-      echo "  $0 --execute-approved npm-ci --project \"$PROJECT_PATH\""
-    elif [[ "$REQUEST_CMD" == *"pnpm"* ]]; then
+    if [[ "$REQUEST_CMD" =~ (^|[[:space:]])pnpm([[:space:]]|$) ]] || [[ "$REQUEST_CMD" == pnpm* ]]; then
       echo "  $0 --execute-approved pnpm-install --project \"$PROJECT_PATH\""
+    elif [[ "$REQUEST_CMD" =~ (^|[[:space:]])npm([[:space:]]|$) ]] || [[ "$REQUEST_CMD" == npm* ]]; then
+      echo "  $0 --execute-approved npm-ci --project \"$PROJECT_PATH\""
+    elif [[ "$REQUEST_CMD" =~ (^|[[:space:]])yarn([[:space:]]|$) ]] || [[ "$REQUEST_CMD" == yarn* ]]; then
+      echo "  $0 --execute-approved yarn-install --project \"$PROJECT_PATH\""
+    elif [[ "$REQUEST_CMD" =~ (^|[[:space:]])bun([[:space:]]|$) ]] || [[ "$REQUEST_CMD" == bun* ]]; then
+      echo "  $0 --execute-approved bun-install --project \"$PROJECT_PATH\""
     fi
     ;;
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "WSL Safe Maintenance Doctor"
+  short_description: "Audit and classify WSL maintenance safely"
+  default_prompt: "Run a read-only WSL maintenance audit, classify findings, and stop before any mutation."
